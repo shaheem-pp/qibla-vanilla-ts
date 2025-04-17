@@ -1,31 +1,33 @@
+// index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta charset="UTF-8"/>
+	<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 	<title>Qibla Finder</title>
 	<!-- Bootstrap 5 CSS -->
 	<link
-			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-			rel="stylesheet"
-			integrity="sha384-..."
 			crossorigin="anonymous"
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+			integrity="sha384-..."
+			rel="stylesheet"
 	/>
 </head>
 <body>
 <div class="container mt-5 text-center">
 	<h2>Qibla Finder</h2>
 	<div class="mb-3">
-		<button id="use-location" class="btn btn-primary me-2">Use My Location</button>
+		<button class="btn btn-primary me-2" id="use-location">Use My Location</button>
+		<button class="btn btn-secondary" id="enable-compass">Enable Compass</button>
 	</div>
-	<form id="coord-form" class="mb-3 d-inline-flex">
-		<input id="lat-input" type="text" placeholder="Latitude" class="form-control me-2" />
-		<input id="lon-input" type="text" placeholder="Longitude" class="form-control me-2" />
-		<button type="submit" class="btn btn-success">Submit</button>
+	<form class="mb-3 d-inline-flex" id="coord-form">
+		<input class="form-control me-2" id="lat-input" placeholder="Latitude" type="text"/>
+		<input class="form-control me-2" id="lon-input" placeholder="Longitude" type="text"/>
+		<button class="btn btn-success" type="submit">Submit</button>
 	</form>
-	<div id="result" class="mt-4"></div>
+	<div class="mt-4" id="result"></div>
 </div>
 
-<script type="module" src="/src/main.ts"></script>
+<script src="/src/main.ts" type="module"></script>
 </body>
 </html>
