@@ -1,57 +1,72 @@
-let useCompass = false;
-let direction = 0;
-let deviceAngle = 0;
+// src/main.ts
+let currentQibla: number | null = null;
 
-const latInput = document.getElementById("lat") as HTMLInputElement;
-const lngInput = document.getElementById("lng") as HTMLInputElement;
-const output = document.getElementById("output")!;
-const compassImg = document.getElementById("compass") as HTMLImageElement;
+async function fetchQibla(lat: number, lon: number): Promise<void> {
+    try {
+        const res = await fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lon}`);
+        const json = await res.json();
+        const dir = json.data.direction as number;
+        currentQibla = dir;
 
-document.getElementById("manualBtn")?.addEventListener("click", () => {
-    if (latInput.value && lngInput.value) {
-        fetchQibla(latInput.value, lngInput.value);
+        const resultEl = document.getElementById('result')!;
+        resultEl.innerHTML = `
+      <p>Turn <strong>${dir.toFixed(2)}°</strong> from North to face Qibla</p>
+      <img id="compass-img" src="https://api.aladhan.com/v1/qibla/${lat}/${lon}/compass"
+           alt="Compass" style="width:300px;transition:transform 0.3s;" />
+    `;
+    } catch (err) {
+        console.error(err);
+        alert('Could not fetch Qibla direction. Please try again later.');
     }
-});
+}
 
-document.getElementById("locationBtn")?.addEventListener("click", () => {
+document.getElementById('use-location')!.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+        alert('Geolocation not supported in this browser. Please enter your coordinates manually.');
+        return;
+    }
     navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude.toString();
-            const lng = position.coords.longitude.toString();
-            latInput.value = lat;
-            lngInput.value = lng;
-            fetchQibla(lat, lng);
-            useCompass = true;
+        (pos) => fetchQibla(pos.coords.latitude, pos.coords.longitude),
+        (err) => {
+            switch (err.code) {
+                case err.PERMISSION_DENIED:
+                    alert('Location permission was denied. Please enable it in your browser settings or enter coordinates manually.');
+                    break;
+                case err.POSITION_UNAVAILABLE:
+                    alert('Location information is unavailable. Please enter coordinates manually.');
+                    break;
+                case err.TIMEOUT:
+                    alert('Location request timed out. Try again or enter coordinates manually.');
+                    break;
+                default:
+                    alert('An unknown error occurred while fetching location. Enter coordinates manually.');
+            }
         },
-        () => alert("Unable to get your location")
+        {timeout: 10000}
     );
 });
 
-function fetchQibla(lat: string, lng: string) {
-    fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`)
-        .then((res) => res.json())
-        .then((data) => {
-            direction = data.data.direction;
-            output.textContent = `Qibla Direction: ${direction.toFixed(2)}°`;
-            compassImg.src = `https://api.aladhan.com/v1/qibla/${lat}/${lng}/compass`;
-            compassImg.style.display = "block";
-            updateRotation();
-        });
-}
-
-function updateRotation() {
-    if (useCompass) {
-        compassImg.style.transform = `rotate(${direction - deviceAngle}deg)`;
-    } else {
-        compassImg.style.transform = "none";
+document.getElementById('coord-form')!.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const latStr = (document.getElementById('lat-input') as HTMLInputElement).value.trim();
+    const lonStr = (document.getElementById('lon-input') as HTMLInputElement).value.trim();
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+    if (isNaN(lat) || isNaN(lon)) {
+        alert('Please enter valid numeric coordinates.');
+        return;
     }
-}
+    fetchQibla(lat, lon);
+});
 
+// Handle device orientation for mobile
 if (window.DeviceOrientationEvent) {
-    window.addEventListener("deviceorientation", (event) => {
-        if (event.alpha !== null) {
-            deviceAngle = event.alpha;
-            updateRotation();
+    window.addEventListener('deviceorientation', (event) => {
+        const img = document.getElementById('compass-img') as HTMLImageElement | null;
+        if (img && currentQibla !== null) {
+            const heading = event.alpha ?? 0;
+            const rotate = currentQibla - heading;
+            img.style.transform = `rotate(${rotate}deg)`;
         }
     });
 }

@@ -1,101 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Qibla Direction Finder</title>
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-	<style>
-		#compass {
-			width: 256px;
-			height: 256px;
-			transition: transform 0.5s ease;
-		}
-	</style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Qibla Finder</title>
+	<!-- Bootstrap 5 CSS -->
+	<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-..."
+			crossorigin="anonymous"
+	/>
 </head>
 <body>
-<div class="container py-5">
-	<h1 class="text-center mb-4">Qibla Direction Finder</h1>
-	
-	<div class="card p-4 shadow-sm">
-		<div class="mb-3">
-			<label for="lat" class="form-label">Latitude</label>
-			<input id="lat" type="number" class="form-control" placeholder="Enter Latitude">
-		</div>
-		<div class="mb-3">
-			<label for="lng" class="form-label">Longitude</label>
-			<input id="lng" type="number" class="form-control" placeholder="Enter Longitude">
-		</div>
-		<div class="d-grid gap-2">
-			<button id="manualBtn" class="btn btn-primary">Find Qibla</button>
-			<button id="locationBtn" class="btn btn-outline-secondary">Use My Location</button>
-		</div>
+<div class="container mt-5 text-center">
+	<h2>Qibla Finder</h2>
+	<div class="mb-3">
+		<button id="use-location" class="btn btn-primary me-2">Use My Location</button>
 	</div>
-	
-	<div id="output" class="text-center mt-4 fs-5 fw-semibold"></div>
-	<div class="d-flex justify-content-center mt-3">
-		<img id="compass" style="display:none" alt="Qibla Compass">
-	</div>
+	<form id="coord-form" class="mb-3 d-inline-flex">
+		<input id="lat-input" type="text" placeholder="Latitude" class="form-control me-2" />
+		<input id="lon-input" type="text" placeholder="Longitude" class="form-control me-2" />
+		<button type="submit" class="btn btn-success">Submit</button>
+	</form>
+	<div id="result" class="mt-4"></div>
 </div>
 
-<script>
-	let useCompass = false;
-	let direction = 0;
-	let deviceAngle = 0;
-	
-	const latInput = document.getElementById("lat");
-	const lngInput = document.getElementById("lng");
-	const output = document.getElementById("output");
-	const compassImg = document.getElementById("compass");
-	
-	document.getElementById("manualBtn").addEventListener("click", () => {
-		if (latInput.value && lngInput.value) {
-			fetchQibla(latInput.value, lngInput.value);
-		}
-	});
-	
-	document.getElementById("locationBtn").addEventListener("click", () => {
-		navigator.geolocation.getCurrentPosition(
-				(position) => {
-					const lat = position.coords.latitude.toString();
-					const lng = position.coords.longitude.toString();
-					latInput.value = lat;
-					lngInput.value = lng;
-					fetchQibla(lat, lng);
-					useCompass = true;
-				},
-				() => alert("Unable to get your location")
-		);
-	});
-	
-	function fetchQibla(lat, lng) {
-		fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`)
-				.then(res => res.json())
-				.then(data => {
-					direction = data.data.direction;
-					output.textContent = `Qibla Direction: ${direction.toFixed(2)}°`;
-					compassImg.src = `https://api.aladhan.com/v1/qibla/${lat}/${lng}/compass`;
-					compassImg.style.display = "block";
-					updateRotation();
-				});
-	}
-	
-	function updateRotation() {
-		if (useCompass) {
-			compassImg.style.transform = `rotate(${direction - deviceAngle}deg)`;
-		} else {
-			compassImg.style.transform = "none";
-		}
-	}
-	
-	if (window.DeviceOrientationEvent) {
-		window.addEventListener("deviceorientation", (event) => {
-			if (event.alpha !== null) {
-				deviceAngle = event.alpha;
-				updateRotation();
-			}
-		});
-	}
-</script>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>
