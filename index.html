@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta content="width=device-width, initial-scale=1.0" name="viewport">
+	<title>Qibla Direction Finder</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			padding: 20px;
+			max-width: 500px;
+			margin: auto;
+		}
+		
+		.center {
+			text-align: center;
+		}
+		
+		.compass {
+			width: 256px;
+			height: 256px;
+			margin: 20px auto;
+			transition: transform 0.5s ease;
+		}
+	</style>
+</head>
+<body>
+<h1 class="center">Qibla Direction Finder</h1>
+
+<div>
+	<input id="lat" placeholder="Latitude" style="width: 100%; margin-bottom: 10px;" type="number"/>
+	<input id="lng" placeholder="Longitude" style="width: 100%; margin-bottom: 10px;" type="number"/>
+	<button onclick="handleManualInput()" style="width: 100%; margin-bottom: 10px;">Find Qibla</button>
+	<button onclick="getCurrentLocation()" style="width: 100%;">Use My Location</button>
+</div>
+
+<div class="center" id="output"></div>
+<img class="compass" id="compass" style="display:none"/>
+
+<script>
+	let useCompass = false;
+	let direction = 0;
+	let deviceAngle = 0;
+	
+	function handleManualInput() {
+		const lat = document.getElementById("lat").value;
+		const lng = document.getElementById("lng").value;
+		if (lat && lng) {
+			fetchQibla(lat, lng);
+		}
+	}
+	
+	function getCurrentLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition((position) => {
+				const lat = position.coords.latitude;
+				const lng = position.coords.longitude;
+				document.getElementById("lat").value = lat;
+				document.getElementById("lng").value = lng;
+				fetchQibla(lat, lng);
+				useCompass = true;
+			}, () => alert("Unable to get location"));
+		}
+	}
+	
+	function fetchQibla(lat, lng) {
+		fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`)
+				.then(res => res.json())
+				.then(data => {
+					direction = data.data.direction;
+					document.getElementById("output").innerText = `Qibla Direction: ${direction.toFixed(2)}°`;
+					const compassImg = document.getElementById("compass");
+					compassImg.src = `https://api.aladhan.com/v1/qibla/${lat}/${lng}/compass`;
+					compassImg.style.display = "block";
+					updateRotation();
+				});
+	}
+	
+	function updateRotation() {
+		const compassImg = document.getElementById("compass");
+		if (useCompass) {
+			compassImg.style.transform = `rotate(${direction - deviceAngle}deg)`;
+		} else {
+			compassImg.style.transform = "none";
+		}
+	}
+	
+	if (window.DeviceOrientationEvent) {
+		window.addEventListener("deviceorientation", (event) => {
+			if (event.alpha !== null) {
+				deviceAngle = event.alpha;
+				updateRotation();
+			}
+		});
+	}
+</script>
+</body>
+</html>
