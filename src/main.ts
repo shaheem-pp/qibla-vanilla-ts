@@ -1,24 +1,57 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+let useCompass = false;
+let direction = 0;
+let deviceAngle = 0;
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+const latInput = document.getElementById("lat") as HTMLInputElement;
+const lngInput = document.getElementById("lng") as HTMLInputElement;
+const output = document.getElementById("output")!;
+const compassImg = document.getElementById("compass") as HTMLImageElement;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+document.getElementById("manualBtn")?.addEventListener("click", () => {
+    if (latInput.value && lngInput.value) {
+        fetchQibla(latInput.value, lngInput.value);
+    }
+});
+
+document.getElementById("locationBtn")?.addEventListener("click", () => {
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude.toString();
+            const lng = position.coords.longitude.toString();
+            latInput.value = lat;
+            lngInput.value = lng;
+            fetchQibla(lat, lng);
+            useCompass = true;
+        },
+        () => alert("Unable to get your location")
+    );
+});
+
+function fetchQibla(lat: string, lng: string) {
+    fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lng}`)
+        .then((res) => res.json())
+        .then((data) => {
+            direction = data.data.direction;
+            output.textContent = `Qibla Direction: ${direction.toFixed(2)}°`;
+            compassImg.src = `https://api.aladhan.com/v1/qibla/${lat}/${lng}/compass`;
+            compassImg.style.display = "block";
+            updateRotation();
+        });
+}
+
+function updateRotation() {
+    if (useCompass) {
+        compassImg.style.transform = `rotate(${direction - deviceAngle}deg)`;
+    } else {
+        compassImg.style.transform = "none";
+    }
+}
+
+if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", (event) => {
+        if (event.alpha !== null) {
+            deviceAngle = event.alpha;
+            updateRotation();
+        }
+    });
+}
